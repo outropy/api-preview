@@ -1,0 +1,41 @@
+{
+    "overallSummary": "The PR introduces several changes across multiple files, primarily focusing on refactoring and enhancing the metrics processing logic. Key changes include the removal of hardcoded date intervals, the addition of new methods for real-time and historical metrics retrieval, and the introduction of optional configuration parameters for metrics processing. Additionally, there are improvements in error handling and logging, as well as minor formatting adjustments.",
+    "codeSuggestions": [
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/github/github.service.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Consider adding back the error logging before throwing the BadRequestException to ensure that the error details are captured in the logs for debugging purposes.",
+            "existingCode": "+                'Error authenticating with GITHUB PAT.',",
+            "improvedCode": "console.error(err);\nthrow new BadRequestException('Error authenticating with GITHUB PAT.');",
+            "oneSentenceSummary": "Add error logging before throwing exceptions for better debugging.",
+            "relevantLinesStart": 8,
+            "relevantLinesEnd": 8,
+            "label": "error_handling",
+            "relevanceScore": 8.0
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/gitlab.service.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Similar to the GithubService, consider adding error logging before throwing the BadRequestException to capture error details.",
+            "existingCode": "+                'Error authenticating with GITLAB PAT.',",
+            "improvedCode": "console.error(err);\nthrow new BadRequestException('Error authenticating with GITLAB PAT.');",
+            "oneSentenceSummary": "Add error logging before throwing exceptions in GitlabService.",
+            "relevantLinesStart": 8,
+            "relevantLinesEnd": 8,
+            "label": "error_handling",
+            "relevanceScore": 8.0
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/metrics/processMetrics/doraMetrics/doraMetrics.factory.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Ensure that the logger.error method is correctly configured to handle the error object and metadata. Consider using structured logging to improve log readability and searchability.",
+            "existingCode": "+            this.logger.error({",
+            "improvedCode": "this.logger.error('Error running real-time and historical metrics calculation', {\n    context: DoraMetricsFactory.name,\n    error: error,\n    metadata: {\n        teamId: organizationAndTeamData.teamId,\n        organizationId: organizationAndTeamData.organizationId,\n        hasCodeManagementIntegration: hasCodeManagementIntegration,\n    },\n});",
+            "oneSentenceSummary": "Enhance error logging with structured logging for better readability.",
+            "relevantLinesStart": 43,
+            "relevantLinesEnd": 43,
+            "label": "error_handling",
+            "relevanceScore": 7.5
+        }
+    ]
+}

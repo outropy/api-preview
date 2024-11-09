@@ -1,0 +1,53 @@
+{
+    "overallSummary": "The PR introduces several changes across multiple files, primarily focusing on refactoring and enhancing the metrics processing logic. Key changes include the removal of hardcoded date intervals, the addition of new methods for real-time and historical metrics retrieval, and improvements in error handling and logging. Additionally, the PR modifies the configuration structures to be more flexible and removes unused code related to metrics analysis intervals.",
+    "codeSuggestions": [
+        {
+            "relevantFile": "src/core/application/use-cases/teamArtifacts/enrich-team-artifacts.use-case.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Consider adding comments or documentation to explain the removal of the START_DATE and END_DATE configurations, as this might affect how metrics are calculated or used elsewhere.",
+            "existingCode": "+        const METRICS_HISTORY_CONFIG = {\n+            PAST_METRICS_COUNT: 3,\n+            DAYS_INTERVAL: 7,\n         };",
+            "improvedCode": "        const METRICS_HISTORY_CONFIG = {\n            PAST_METRICS_COUNT: 3,\n            DAYS_INTERVAL: 7,\n            // START_DATE and END_DATE removed to allow dynamic date handling\n        };",
+            "oneSentenceSummary": "Add comments to explain the removal of date configurations.",
+            "relevantLinesStart": 6,
+            "relevantLinesEnd": 9,
+            "label": "documentation_and_comments",
+            "relevanceScore": 6.0
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/github/github.service.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Consider re-adding error logging before throwing the BadRequestException to aid in debugging and monitoring.",
+            "existingCode": "+                'Error authenticating with GITHUB PAT.',",
+            "improvedCode": "console.error(err);\n                throw new BadRequestException(\n                    'Error authenticating with GITHUB PAT.',",
+            "oneSentenceSummary": "Re-add error logging for better debugging.",
+            "relevantLinesStart": 8,
+            "relevantLinesEnd": 9,
+            "label": "error_handling",
+            "relevanceScore": 7.5
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/gitlab.service.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Reintroduce error logging before throwing the BadRequestException to help with debugging and monitoring.",
+            "existingCode": "+                'Error authenticating with GITLAB PAT.',",
+            "improvedCode": "console.error(err);\n                throw new BadRequestException(\n                    'Error authenticating with GITLAB PAT.',",
+            "oneSentenceSummary": "Re-add error logging for better debugging.",
+            "relevantLinesStart": 8,
+            "relevantLinesEnd": 9,
+            "label": "error_handling",
+            "relevanceScore": 7.5
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/metrics/processMetrics/doraMetrics/doraMetrics.factory.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Ensure that the logger.error method is correctly configured to capture all necessary context and error details for effective monitoring.",
+            "existingCode": "+            this.logger.error({\n+                message:\n+                    'Erro ao rodar c\u00e1lculo de m\u00e9tricas em tempo real e historico',\n+                context: DoraMetricsFactory.name,\n+                error: error,\n+                metadata: {\n+                    teamId: organizationAndTeamData.teamId,\n+                    organizationId: organizationAndTeamData.organizationId,\n+                    hasCodeManagementIntegration: hasCodeManagementIntegration,\n+                },\n+            });",
+            "improvedCode": "this.logger.error({\n    message: 'Erro ao rodar c\u00e1lculo de m\u00e9tricas em tempo real e historico',\n    context: DoraMetricsFactory.name,\n    error: error,\n    metadata: {\n        teamId: organizationAndTeamData.teamId,\n        organizationId: organizationAndTeamData.organizationId,\n        hasCodeManagementIntegration: hasCodeManagementIntegration,\n    },\n});",
+            "oneSentenceSummary": "Ensure logger.error captures all necessary context.",
+            "relevantLinesStart": 40,
+            "relevantLinesEnd": 50,
+            "label": "error_handling",
+            "relevanceScore": 8.0
+        }
+    ]
+}

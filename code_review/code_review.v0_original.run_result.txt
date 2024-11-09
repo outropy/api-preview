@@ -1,0 +1,31 @@
+```json
+{
+    "overallSummary": "O PR introduz novas funcionalidades relacionadas à coleta de métricas, removendo partes não utilizadas do código para melhorar a clareza e eficiência. A adição de métodos para buscar métricas em tempo real e históricas é notável, mas o tratamento de erros poderia ser aprimorado em algumas partes.",
+    "codeSuggestions": [
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/metrics/processMetrics/doraMetrics/doraMetrics.factory.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Considere implementar um tratamento de erros mais robusto na nova função 'getRealTimeAndHistoricalMetrics' para garantir que casos inesperados não resultem em falhas silenciosas.",
+            "existingCode": "+    async getRealTimeAndHistoricalMetrics(\n+        organizationAndTeamData: OrganizationAndTeamData,\n+        doraMetricsConfig?: Partial<DoraMetricsConfig>,\n+    ): Promise<MetricTrend[] | {}> {\n+        const hasCodeManagementIntegration =\n+            await this.hasCodeManagementIntegration(\n+                organizationAndTeamData,\n+                doraMetricsConfig?.checkConnectionByOneTeam,\n+            );\n+\n+        try {\n+            if (\n+                !hasCodeManagementIntegration.hasConnection ||\n+                !hasCodeManagementIntegration.isConnected\n+            ) {\n+                return hasCodeManagementIntegration;\n+            }\n+            // ...\n+        } catch (error) {\n+            this.logger.error({\n+                message:\n+                    'Erro ao rodar c\u00e1lculo de m\u00e9tricas em tempo real e historico',\n+                context: DoraMetricsFactory.name,\n+                error: error,\n+                // ...\n            });\n+            throw error;\n+        }\n+    }",
+            "improvedCode": "async getRealTimeAndHistoricalMetrics(\n        organizationAndTeamData: OrganizationAndTeamData,\n        doraMetricsConfig?: Partial<DoraMetricsConfig>,\n    ): Promise<MetricTrend[]> {\n        const hasCodeManagementIntegration =\n            await this.hasCodeManagementIntegration(\n                organizationAndTeamData,\n                doraMetricsConfig?.checkConnectionByOneTeam,\n            );\n+\n        if (!hasCodeManagementIntegration.hasConnection || !hasCodeManagementIntegration.isConnected) {\n            throw new Error('Falha na integração de gerenciamento de código.');\n        }\n+\n        const endDate = new Date();\n        const startDate = new Date(endDate);\n        // ...\n+\n        try {\n           // lógica para processar e retornar métricas\n        } catch (error) {\n            this.logger.error({\n                message: 'Erro ao calcular métricas em tempo real e historico',\n                context: DoraMetricsFactory.name,\n                error: error,\n            });\n            throw new Error('Erro interno ao processar métricas.');\n        }\n    }",
+            "oneSentenceSummary": "Aprimorar o tratamento de erros na função 'getRealTimeAndHistoricalMetrics'.",
+            "relevantLinesStart": 180,
+            "relevantLinesEnd": 210,
+            "label": "error_handling",
+            "relevanceScore": 8
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/metrics/processMetrics/metrics.factory.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Adicionar validações adicionais para o objeto 'metricsConfig' na função 'getLastAndPreviousFlowMetricsByDayInterval' para evitar comportamentos inesperados com configurações inválidas.",
+            "existingCode": "+        async getLastAndPreviousFlowMetricsByDayInterval(\n+            organizationAndTeamData: OrganizationAndTeamData,\n+            metricsConfig: Partial<FlowMetricsConfig>,\n+        ): Promise<any[]> {\n+            try {\n+                // lógica do método\n+            }",
+            "improvedCode": "async getLastAndPreviousFlowMetricsByDayInterval(\n            organizationAndTeamData: OrganizationAndTeamData,\n            metricsConfig: Partial<FlowMetricsConfig>,\n        ): Promise<any[]> {\n            // Validações\n            if (!metricsConfig || (metricsConfig.howManyMetricsInThePast < 1)) {\n                throw new Error('Configuração de métricas inválida.');\n            }\n            try {\n                // lógica do método\n            }",
+            "oneSentenceSummary": "Adicionar validações para evitar configurações inválidas de métricas.",
+            "relevantLinesStart": 426,
+            "relevantLinesEnd": 440,
+            "label": "error_handling",
+            "relevanceScore": 7
+        }
+    ]
+}
+```

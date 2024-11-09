@@ -1,0 +1,41 @@
+{
+    "overallSummary": "O PR remove a configuração de datas de início e término fixas para métricas históricas e introduz um novo método para obter métricas em tempo real e históricas. Além disso, ajusta a configuração de métricas para permitir a especificação de quantas métricas passadas devem ser consideradas. Também há melhorias na formatação de código e tratamento de exceções em serviços relacionados ao GitHub e GitLab.",
+    "codeSuggestions": [
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/github/github.service.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Considere adicionar logs de erro antes de lançar a exceção para facilitar a depuração e o monitoramento de erros.",
+            "existingCode": "+                'Error authenticating with GITHUB PAT.',",
+            "improvedCode": "console.error('Error authenticating with GITHUB PAT:', err);\n                throw new BadRequestException('Error authenticating with GITHUB PAT.');",
+            "oneSentenceSummary": "Adicionar logs de erro antes de lançar exceções no serviço do GitHub.",
+            "relevantLinesStart": 8,
+            "relevantLinesEnd": 9,
+            "label": "error_handling",
+            "relevanceScore": 7
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/gitlab.service.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Considere adicionar logs de erro antes de lançar a exceção para facilitar a depuração e o monitoramento de erros.",
+            "existingCode": "+                'Error authenticating with GITLAB PAT.',",
+            "improvedCode": "console.error('Error authenticating with GITLAB PAT:', err);\n                throw new BadRequestException('Error authenticating with GITLAB PAT.');",
+            "oneSentenceSummary": "Adicionar logs de erro antes de lançar exceções no serviço do GitLab.",
+            "relevantLinesStart": 8,
+            "relevantLinesEnd": 9,
+            "label": "error_handling",
+            "relevanceScore": 7
+        },
+        {
+            "relevantFile": "src/core/infrastructure/adapters/services/metrics/processMetrics/doraMetrics/doraMetrics.factory.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Considere adicionar comentários para explicar a lógica complexa dentro do método 'getRealTimeAndHistoricalMetrics', especialmente em relação à configuração de métricas e análise de tendências.",
+            "existingCode": "+    async getRealTimeAndHistoricalMetrics(\n+        organizationAndTeamData: OrganizationAndTeamData,\n+        doraMetricsConfig?: Partial<DoraMetricsConfig>,\n+    ): Promise<MetricTrend[] | {}> {",
+            "improvedCode": "// Este método obtém métricas em tempo real e históricas para uma equipe específica.\n    async getRealTimeAndHistoricalMetrics(\n        organizationAndTeamData: OrganizationAndTeamData,\n        doraMetricsConfig?: Partial<DoraMetricsConfig>,\n    ): Promise<MetricTrend[] | {}> {",
+            "oneSentenceSummary": "Adicionar comentários explicativos no método 'getRealTimeAndHistoricalMetrics'.",
+            "relevantLinesStart": 1,
+            "relevantLinesEnd": 4,
+            "label": "documentation_and_comments",
+            "relevanceScore": 5
+        }
+    ]
+}

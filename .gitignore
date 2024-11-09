@@ -1,0 +1,111 @@
+node_modules
+.ipynb_checkpoints
+localhost*pem
+git_sha.txt
+chat_history.txt
+.envrc
+*#
+*.iml
+*.ipr
+*.iws
+*.jar
+*.sw?
+*~
+.#*
+.*.md.html
+.DS_Store
+.attach_pid*
+.factorypath
+.idea
+.metadata
+.project
+.vscode
+.prod
+/code
+MANIFEST.MF
+_site/
+activemq-data
+bin
+build
+build.log
+# Python
+__pycache__/
+*/__pycache__/
+.pytest_cache/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyz
+*.pyw
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.egg-info
+*.pyc
+*.coverage
+.coverage
+htmlcov/
+.tox/
+*venv*/
+env/
+ENV/
+venv/
+dist/
+logs/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Database
+*.db
+*.sqlite
+
+# Environment variables
+.env
+!companion/.env
+beta.env
+local.env
+# Logs and reports
+*.log
+
+# Other
+.DS_Store
+
+
+# Rodrigo local env var files
+.prodrc
+.rodrigo
+.test
+.openai
+*.pem
+.migrations
+
+#jsoncache dir
+cache/
+
+
+# ignore notebooks unless explicitly added
+scratch/*.ipynb
+extra/
+data/
+
+# g-api local creds
+credentials.json
+token.json
+
+requirements.txt.done
+*/pnpm-lock.yaml
+.vercel
+
+# Ignore project that already has a .gitignore to avoid conflicts
+!outropinho-ui/*
+!companion/*
+!webapp/*
+ignored
+
+frontend-build/

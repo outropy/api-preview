@@ -1,0 +1,41 @@
+{
+    "overallSummary": "This pull request refactors the Kubernetes backend plugin to use the 'http-proxy-middleware' package for proxying requests to Kubernetes clusters. It updates the KubernetesProxy class to utilize this middleware, modifies the KubernetesBuilder to accommodate changes in proxy construction, and adjusts tests accordingly. The refactor simplifies the proxy logic and improves maintainability by leveraging a well-established middleware library.",
+    "codeSuggestions": [
+        {
+            "relevantFile": "plugins/kubernetes-backend/src/service/KubernetesProxy.ts",
+            "language": "TypeScript",
+            "suggestionContent": "Consider adding a check to ensure that the 'clusterSupplier' is not null or undefined before using it. This will prevent potential runtime errors if the supplier is not properly initialized.",
+            "existingCode": "+    private readonly clusterSupplier: KubernetesClustersSupplier,",
+            "improvedCode": "constructor(\n    private readonly logger: Logger,\n    private readonly clusterSupplier: KubernetesClustersSupplier,\n  ) {\n    if (!clusterSupplier) {\n      throw new Error('Cluster supplier must be provided');\n    }\n  }",
+            "oneSentenceSummary": "Add a check to ensure 'clusterSupplier' is initialized in the KubernetesProxy constructor.",
+            "relevantLinesStart": 43,
+            "relevantLinesEnd": 45,
+            "label": "error_handling",
+            "relevanceScore": 8.0
+        },
+        {
+            "relevantFile": "plugins/kubernetes-backend/src/service/KubernetesProxy.ts",
+            "language": "TypeScript",
+            "suggestionContent": "The 'onError' function in the proxy options should handle different types of errors more gracefully. Consider distinguishing between network errors, timeout errors, and other types of errors to provide more specific error messages.",
+            "existingCode": "+      onError: (error: Error) => {",
+            "improvedCode": "onError: (error: Error) => {\n  if (error.message.includes('ECONNREFUSED')) {\n    this.logger.error('Connection refused to cluster', error);\n  } else if (error.message.includes('ETIMEDOUT')) {\n    this.logger.error('Request to cluster timed out', error);\n  } else {\n    this.logger.error('Unexpected error occurred', error);\n  }\n  const wrappedError = new ForwardedError(\n    `Cluster '${requestedCluster}' request error`,\n    error,\n  );\n  this.logger.error(wrappedError);\n  const body: ErrorResponseBody = {\n    error: serializeError(wrappedError, {\n      includeStack: process.env.NODE_ENV === 'development',\n    }),\n    request: { method: req.method, url: req.originalUrl },\n    response: { statusCode: 500 },\n  };\n  res.status(500).json(body);\n}",
+            "oneSentenceSummary": "Enhance error handling in 'onError' to differentiate between error types.",
+            "relevantLinesStart": 67,
+            "relevantLinesEnd": 69,
+            "label": "error_handling",
+            "relevanceScore": 7.5
+        },
+        {
+            "relevantFile": "plugins/kubernetes-backend/src/service/KubernetesProxy.ts",
+            "language": "TypeScript",
+            "suggestionContent": "The 'pathRewrite' option in the proxy middleware should be tested to ensure it correctly rewrites paths for all expected scenarios. Consider adding unit tests to verify this behavior.",
+            "existingCode": "+      pathRewrite: { [`^${req.baseUrl}`]: '' },",
+            "improvedCode": "pathRewrite: { [`^${req.baseUrl}`]: '' }, // Ensure this is tested for all expected path scenarios",
+            "oneSentenceSummary": "Add unit tests to verify 'pathRewrite' behavior in proxy middleware.",
+            "relevantLinesStart": 62,
+            "relevantLinesEnd": 62,
+            "label": "testing",
+            "relevanceScore": 6.5
+        }
+    ]
+}
