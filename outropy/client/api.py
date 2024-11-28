@@ -3,13 +3,12 @@ import io
 import json
 import os
 from datetime import datetime
-from enum import StrEnum
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import httpx
 from httpx import Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from outropy.client import OUTROPY_API_KEY
 from outropy.client.api_headers import (
@@ -22,45 +21,31 @@ from outropy.client.benchmark import (
     CreateBenchmarkRequest,
 )
 from outropy.client.data_source import (
-    DataSourceCreateResponse,
     DataSourceMetadata,
     DataSourceResponse,
+    IndexCreateResponse,
 )
 from outropy.client.directives import Directives
-from outropy.client.pipeline import PipelineExecuteResponse, PipelineRunResponse
+from outropy.client.pipeline import TaskExecuteResponse, TaskRunResponse
 from outropy.client.requests import (
     CreateDataSourceRequest,
+    CreateIndexRequest,
     CreateTaskRequest,
     Example,
     ExecuteTaskRequest,
+    IndexerType,
     OutropyUrn,
+    TaskNames,
 )
 from outropy.types.pydantic_to_schema import (
     recursive_convert_pydantic_to_dict,
     to_schema,
 )
 
-
-class DefaultInput(BaseModel):
-    text: str = Field()
-
-
-class DefaultOutput(BaseModel):
-    text: str = Field()
-
-
 OutT = TypeVar("OutT", bound=BaseModel)
 InT = TypeVar("InT", bound=BaseModel)
 
 ReturnType = Type[OutT] | Type[str] | List[Type[OutT]] | List[Type[str]]
-
-
-class Tasks(StrEnum):
-    EXTRACT = "extract"
-    TRANSFORM = "transform"
-    RECOMMEND = "recommend"
-    INGEST_REFERENCE_DATA = "ingest_reference_data"
-    TEXT_TO_TEXT = "text_to_text"
 
 
 class OutropyApi:
@@ -143,8 +128,12 @@ class OutropyApi:
         headers = {
             UPLOAD_FILE_SIZE_HEADER: str(file_size),
             UPLOAD_FILE_MIME_TYPE_HEADER: mime_type,
-            OUTROPY_API_KEY: self.api_key,
         }
+        if self.api_key.startswith("ot-"):
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        else:
+            headers[OUTROPY_API_KEY] = self.api_key
+
         # Create an async HTTPX client
         async with httpx.AsyncClient(timeout=60 * 10) as client:
 
@@ -172,23 +161,23 @@ class OutropyApi:
     async def create_task(
         self,
         *,
-        task: Tasks,
+        task: TaskNames,
         name: str,
+        prompt: str,
         reference_data: List[OutropyUrn] = [],
         input_type: Optional[Type[InT]] = None,
         output_type: Optional[Type[OutT]] = None,
-        prompt: str,
         directives: Optional[Directives] = None,
         examples: List[Example] = [],
         collection_name: Optional[str] = None,
     ) -> OutropyUrn:
         path = "/pipelines/create"
-        input_schema = to_schema(input_type or DefaultInput)
-        output_schema = to_schema(output_type or DefaultOutput)
+        input_schema = to_schema(input_type) if input_type else None
+        output_schema = to_schema(output_type) if output_type else None
         request = CreateTaskRequest(
-            task_type=task.value,
+            task_type=task,
             name=name,
-            directives=directives or Directives(),
+            directives=directives,
             reference_data=reference_data,
             input_type=input_schema,
             output_type=output_schema,
@@ -206,7 +195,7 @@ class OutropyApi:
         subject: Union[str, List[str]],
         directives: Optional[Directives] = None,
         reference_data: List[OutropyUrn] = [],
-    ) -> PipelineExecuteResponse:
+    ) -> TaskExecuteResponse:
         subjects = subject if isinstance(subject, list) else [subject]
 
         if len(subjects) == 0:
@@ -222,18 +211,23 @@ class OutropyApi:
             reference_data=reference_data,
         )
         response = await self._call_inference(path, request)
-        return PipelineExecuteResponse(**response)
+        return TaskExecuteResponse(**response)
 
-    async def get_pipeline_run(self, run_id: OutropyUrn) -> PipelineRunResponse:
+    async def get_pipeline_run(self, run_id: OutropyUrn) -> TaskRunResponse:
         path = f"/pipelines/runs/{run_id}"
         response = await self._make_json_http_request(
             f"{self.base_url}api{path}", "GET", {}
         )
-        return PipelineRunResponse(**response)
+        return TaskRunResponse(**response)
 
-    async def wait_until_finishes_running(
-        self, run_id: OutropyUrn
-    ) -> PipelineRunResponse:
+    async def get_pipeline_run_input(self, run_id: OutropyUrn) -> ExecuteTaskRequest:
+        path = f"/pipelines/runs/{run_id}/inputs"
+        response = await self._make_json_http_request(
+            f"{self.base_url}api{path}", "GET", {}
+        )
+        return ExecuteTaskRequest(**response)
+
+    async def wait_until_finishes_running(self, run_id: OutropyUrn) -> TaskRunResponse:
         run_info = await self.get_pipeline_run(run_id)
         while run_info.status.is_running:
             run_info = await self.get_pipeline_run(run_id)
@@ -279,26 +273,24 @@ class OutropyApi:
         name: str,
         description: Optional[str] = None,
         directives: Optional[Directives] = None,
-    ) -> DataSourceCreateResponse:
+    ) -> DataSourceResponse:
         path = "/data-sources/create"
         request = CreateDataSourceRequest(
             name=name, description=description, directives=directives
         )
         response = await self._make_json_http_request(
-            f"{self.base_url}api{path}", "POST", request.model_dump()
+            self._build_full_url(path), "POST", request.model_dump()
         )
-        return DataSourceCreateResponse.model_validate(response)
+        return DataSourceResponse.model_validate(response)
 
     async def set_metadata(self, data_urn: str, metadata: Dict[str, str]) -> None:
         path = f"/data/{data_urn}/metadata"
-        await self._make_json_http_request(
-            f"{self.base_url}api{path}", "POST", metadata
-        )
+        await self._make_json_http_request(self._build_full_url(path), "POST", metadata)
 
     async def get_metadata(self, data_urn: str) -> DataSourceMetadata:
         path = f"/data/{data_urn}/metadata"
         response = await self._make_json_http_request(
-            f"{self.base_url}api{path}", "GET", {}
+            self._build_full_url(path), "GET", {}
         )
         return DataSourceMetadata.model_validate(response)
 
@@ -328,16 +320,19 @@ class OutropyApi:
     async def get_benchmark_run(self, run_id: OutropyUrn) -> BenchmarkRunResponse:
         path = f"/benchmarks/runs/{run_id}"
         response = await self._make_json_http_request(
-            f"{self.base_url}api{path}", "GET", {}
+            self._build_full_url(path), "GET", {}
         )
         return BenchmarkRunResponse(**response)
 
     async def _make_http_request(
         self, url: str, method: str, payload: Dict[str, str]
     ) -> Response:
-        headers: Dict[str, str] = {
-            OUTROPY_API_KEY: self.api_key,
-        }
+        headers: Dict[str, str] = {}
+        if self.api_key.startswith("ot-"):
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        else:
+            headers[OUTROPY_API_KEY] = self.api_key
+
         payload = recursive_convert_pydantic_to_dict(payload)
 
         try:
@@ -363,3 +358,35 @@ class OutropyApi:
     ) -> Dict[str, Any]:
         response = await self._make_http_request(url, method, payload)
         return response.json()  # type: ignore
+
+    def _build_full_url(self, path: str) -> str:
+        return f"{self.base_url}api{path}"
+
+    async def create_index(
+        self,
+        name: str,
+        data_source_urn: str,
+        type: IndexerType,
+        description: Optional[str] = None,
+    ) -> IndexCreateResponse:
+        path = "/data-sources/create-index"
+        request = CreateIndexRequest(
+            name=name,
+            data_source_urn=data_source_urn,
+            description=description,
+            type=type,
+        )
+        response = await self._make_json_http_request(
+            f"{self.base_url}api{path}", "POST", request.model_dump()
+        )
+        return IndexCreateResponse.model_validate(response)
+
+    async def get_data_source_by_name(self, name: str) -> Optional[DataSourceResponse]:
+        path = f"/data-sources/by-name/{name}"
+        response = cast(
+            Optional[dict[str, Any]],
+            await self._make_json_http_request(f"{self.base_url}api{path}", "GET", {}),
+        )
+        if response is None:
+            return None
+        return DataSourceResponse.model_validate(response)

@@ -16,4 +16,4 @@ class TestHasUrn(unittest.TestCase):
         others = [StubHasUrn("bar"), StubHasUrn("baz")]
 
         self.assertIsNone(find_by_urn(expected.urn, others))
-        self.assertEquals(expected, find_by_urn(expected.urn, [expected] + others))
+        self.assertEqual(expected, find_by_urn(expected.urn, [expected] + others))

@@ -32,10 +32,7 @@ def setup_structlog(json_logs: bool, log_level: str) -> None:
         processors = [
             structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
             structlog.stdlib.add_log_level,
-            structlog.dev.ConsoleRenderer(
-                # It's impossible to read the output from rich
-                exception_formatter=structlog.dev.plain_traceback,
-            ),
+            structlog.dev.ConsoleRenderer(),
         ]
 
     # Bind structlog to logging

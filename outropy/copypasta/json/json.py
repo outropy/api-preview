@@ -1,6 +1,8 @@
 import json
 from typing import Any, Dict, List, Optional, TypeAlias
 
+from pydantic_core import from_json, to_json
+
 JSON_OBJECT: TypeAlias = Dict[str, Any]
 JSON_ARRAY: TypeAlias = List[Any]
 JSON_VAL: TypeAlias = Any
@@ -23,8 +25,16 @@ class InvalidJsonException(Exception):
         return f"Invalid JSON {self.e} contents:\n===\n{self.payload[:1000]}\n==="
 
 
+def dumpb(obj: Any) -> bytes:
+    return to_json(obj)
+
+
 def dumps(obj: Any) -> str:
     return json.dumps(obj, cls=GenericJSONEncoder)
+
+
+def loadb(json_bytes: bytes) -> JSON_OBJECT:
+    return from_json(json_bytes)  # type: ignore
 
 
 def loads(json_str: str) -> JSON_OBJECT:

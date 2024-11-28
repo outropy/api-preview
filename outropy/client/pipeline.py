@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from outropy.copypasta.optional import ensure
 
@@ -54,21 +54,38 @@ class PipelineRunStatus(Enum):
         return cls.__members__.get(status)
 
 
-class PipelineRunResponse(BaseModel):
-    urn: str
-    pipeline_urn: str
-    pipeline_name: str
-    task_type: str
-    task_icon: str
-    pipeline_version_urn: str
-    pipeline_version_name: str
-    href: str
-    status_str: str
-    status_description: str
-    results_urn: str
-    created_at: datetime
-    updated_at: datetime
-    duration: float
+class TaskRunResponse(BaseModel):
+    urn: str = Field(description="The URN for this task run")
+    pipeline_urn: str = Field(
+        description="The URN of the pipeline that executed this task"
+    )
+    pipeline_version_urn: str = Field(
+        description="The URN of the pipeline version that executed this task"
+    )
+    href: str = Field(description="URL that can be used to visualize the task run")
+    results_urn: Optional[str] = Field(
+        description="The URN of the results of this task run", default=None
+    )
+    created_at: datetime = Field(description="When this task run was created")
+    updated_at: datetime = Field(description="When this task run was last updated")
+    duration: float = Field(description="The duration of this task run in seconds")
+
+    pipeline_name: str = Field(
+        deprecated=True, description="Internal usage, will be removed in the future"
+    )
+    task_type: str = Field(
+        deprecated=True, description="Internal usage, will be removed in the future"
+    )
+    task_icon: str = Field(
+        deprecated=True, description="Internal usage, will be removed in the future"
+    )
+    pipeline_version_name: str = Field(
+        deprecated=True, description="Internal usage, will be removed in the future"
+    )
+    status_str: str = Field(
+        deprecated=True, description="Internal usage, will be removed in the future"
+    )
+    status_description: str = Field(description="A description of the task run status")
 
     @property
     def status(self) -> PipelineRunStatus:
@@ -111,16 +128,18 @@ class PipelineCreateResponse(BaseModel):
     href: str
 
 
-class PipelineExecuteResponse(BaseModel):
-    urn: str
-    href: str
+class TaskExecuteResponse(BaseModel):
+    urn: str = Field(
+        description="The unique URN of the task run, can be used to retrieve its status and results later."
+    )
+    href: str = Field(description="URL that can be used to visualize the task run")
 
 
 class PipelineRunsResponse(BaseModel):
     total: int
     page: int
     page_size: int
-    items: List[PipelineRunResponse]
+    items: List[TaskRunResponse]
 
 
 class PipelineVersionsResponse(BaseModel):

@@ -1,7 +1,5 @@
 from typing import Coroutine, List, Optional, Sequence, TypeVar
 
-from deprecated import deprecated
-
 T = TypeVar("T")
 
 
@@ -23,7 +21,7 @@ def remove_nones_from(lst: Sequence[Optional[T]]) -> List[T]:
     return [x for x in lst if x is not None]
 
 
-@deprecated("Use remove_nones instead")
+# TODO "Use remove_nones instead"
 def flatten(lst: Sequence[Optional[T]]) -> List[T]:
     return remove_nones_from(lst)
 

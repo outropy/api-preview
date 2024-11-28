@@ -1,4 +1,3 @@
-import json
 import unittest
 from typing import Dict
 from uuid import UUID
@@ -6,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from outropy.copypasta.exceptions import IllegalArgumentError
+from outropy.copypasta.json import json
 from outropy.urn.urn import Urn
 
 
@@ -141,3 +141,10 @@ class TestUrn(unittest.TestCase):
 
         dec = SimpleModel.model_validate(json.loads(enc))
         self.assertEqual(dec.urn, m.urn)
+
+    def test_json_serialization_from_map(self) -> None:
+        m = Urn.parse("unittest:some-urn-supported:1")
+        pydantic_serialized = m.model_dump_json()
+        manually_serialized = json.dumps(m.model_dump())
+
+        self.assertEqual(pydantic_serialized, manually_serialized)

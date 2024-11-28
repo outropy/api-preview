@@ -1,12 +1,10 @@
 import hashlib
-import os
 import re
 import urllib
 import uuid
 from typing import Annotated, Any, List, Optional, Type
 from uuid import UUID
 
-from deprecated import deprecated
 from pydantic import (
     BaseModel,
     Field,
@@ -26,8 +24,6 @@ valid_segment = r"^[a-zA-Z0-9._%-]+$"
 logger = logging.get_logger(__name__)
 
 _urn_secret = "378eihdnwknsjkxbvc"
-
-_urn_debug_enabled = os.getenv("URN_DEBUG", "0") == "1"
 
 
 def try_uuid(value: str) -> Optional[UUID]:
@@ -74,9 +70,6 @@ class RawUrn(BaseModel):
         if len(segment_str) == 0:
             raise IllegalArgumentError("URN segment cannot be empty")
         if segment_str == "None":
-            if _urn_debug_enabled:
-                raise IllegalArgumentError("URN segment cannot be None")
-
             # TODO: this requires fixing a million unrelated tests
             logger.warning(
                 "URN segment is the string 'None'. This is probably a mistake. If it's not, please ignore this warning."
@@ -92,15 +85,10 @@ class RawUrn(BaseModel):
     @classmethod
     def _validated_identifier(cls, segment: Optional[SupportsStr]) -> str:
         # TODO: this requires fixing a million unrelated tests
-        if segment is None and _urn_debug_enabled:
-            raise IllegalArgumentError("URN segment cannot be None")
         segment_str = str(segment)
         if len(segment_str.lstrip().rstrip()) == 0:
             raise IllegalArgumentError("URN identifier cannot be empty")
         if segment_str == "None":
-            if _urn_debug_enabled:
-                raise IllegalArgumentError("URN segment cannot be None")
-
             logger.warning(
                 "URN segment is the string 'None'. This is probably a mistake. If it's not, please ignore this warning."
             )
@@ -174,14 +162,16 @@ class RawUrn(BaseModel):
         return f"<{self.__class__.__name__} {str(self)}>"  # urn-ok
 
     @staticmethod
-    @deprecated("Use Urn.parse instead")
+    # "Use Urn.parse instead"
     def parse_encoded_urn(urn_str: str) -> "Urn":
         return RawUrn.parse(urn_str)
 
     @staticmethod
     def parse(urn_str: str) -> "Urn":
+        if not urn_str:
+            raise IllegalArgumentError("URN string cannot be None or empty")
         if not RawUrn.is_valid_as_urn(urn_str):
-            raise ValueError(f"Invalid URN format: [{urn_str}] is not a URN")
+            raise IllegalArgumentError(f"Invalid URN format: [{urn_str}] is not a URN")
         urn_parts = urn_str.split(":")
         identifier_part = urn_parts[2]
         collection_part = urn_parts[1]
@@ -239,11 +229,20 @@ class RawUrn(BaseModel):
     def from_raw_identifier(
         cls, namespace: str, collection: str, identifier: SupportsStr
     ) -> "Urn":
+        return Urn.build(namespace, collection, identifier)
+
+    @classmethod
+    def build(cls, namespace: str, collection: str, identifier: SupportsStr) -> "Urn":
         identifier = cls._validated_identifier(identifier)
         encoded_id = cls.encode_id_for_latest(namespace, collection, identifier)
         return RawUrn(_urn_secret, namespace, collection, encoded_id)
 
     @classmethod
+    def build_unique(cls, namespace: str, collection: str) -> "Urn":
+        return cls.build(namespace, collection, cls.new_uuid())
+
+    @classmethod
+    # TODO: Use Urn.build instead
     def from_encoded_identifier(
         cls, namespace: str, collection: str, identifier: SupportsStr
     ) -> "Urn":

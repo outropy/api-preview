@@ -1,4 +1,6 @@
-from typing import Any, Protocol, Sequence, Set, Type, TypeVar, Union
+import inspect
+import sys
+from typing import Any, List, Optional, Protocol, Sequence, Set, Type, TypeVar, Union
 
 T = TypeVar("T")
 
@@ -33,3 +35,25 @@ def ensured_is_a(obj: Any, expected_type: Type[ExpectedType]) -> ExpectedType:
     if not isinstance(obj, expected_type):
         raise TypeCheckError(obj, expected_type)
     return obj
+
+
+def find_subclass_by_name(class_name: str, base_class: Type[T]) -> Optional[Type[T]]:
+    modules: List[Any] = list(sys.modules.values())
+
+    for module in modules:
+        if module is None:
+            continue
+        try:
+            for _, cls in inspect.getmembers(module):
+                if (
+                    inspect.isclass(cls)
+                    and issubclass(cls, base_class)
+                    and cls.__name__ == class_name
+                    and cls != base_class
+                ):
+                    return cls
+        except ImportError:
+            # Skip modules that can't be inspected
+            continue
+
+    return None

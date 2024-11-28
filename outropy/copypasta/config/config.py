@@ -66,6 +66,10 @@ class Config:
     def _redacted(self, maybe_value: Optional[str]) -> Optional[str]:
         return f"REDACTED ({len(maybe_value)} chars)" if maybe_value else None
 
+    def get_bool(self, key: str, default: Optional[bool] = None) -> Optional[bool]:
+        res = self.ensured(key, "false").lower()
+        return res in {"1", "on", "true", "yes"}
+
     def __str__(self) -> str:
         return self.__repr__()
 
